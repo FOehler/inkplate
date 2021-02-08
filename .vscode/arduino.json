@@ -1,0 +1,6 @@
+{
+    "board": "Croduino_Boards:Inkplate:Inkplate6",
+    "configuration": "PSRAM=enabled,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=115200,DebugLevel=none",
+    "port": "COM3",
+    "sketch": "Examples\\Advanced_Inkplate_Features\\Inkplate_Touchpads\\Inkplate_Touchpads.ino"
+}

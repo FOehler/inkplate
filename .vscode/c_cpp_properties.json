@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Users\\fabri\\OneDrive\\Dokumente\\Arduino\\libraries\\InkplateLibrary\\src",
+                "C:\\Users\\fabri\\AppData\\Local\\Arduino15\\packages\\Croduino_Boards\\tools\\**",
+                "C:\\Users\\fabri\\OneDrive\\Dokumente\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Users\\fabri\\AppData\\Local\\Arduino15\\packages\\Croduino_Boards\\hardware\\Inkplate\\1.0.1\\**"
+            ],
+            "forcedInclude": [],
+            "defines": [
+                "USBCON"
+            ],
+            "intelliSenseMode": "windows-msvc-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
