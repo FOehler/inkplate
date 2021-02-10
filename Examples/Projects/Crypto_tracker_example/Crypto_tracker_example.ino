@@ -22,16 +22,16 @@
 //---------- CHANGE HERE  -------------:
 
 // Adjust your time zone, 2 means UTC+2
-int timeZone = 2;
+int timeZone = 1;
 
 // Put in your ssid and password
-char *ssid = "";
-char *pass = "";
+const char *ssid = "WN-849E40";         // Your WiFi SSID
+const char *password = "3928253b3b";    // Your WiFi password
 
 // OPTIONAL:
 // change to a different currency
-char *currency = "bitcoin";
-char *currencyAbbr = "BTC";
+const char *currency = "bitcoin";
+const char *currencyAbbr = "BTC";
 
 // You can find your currency id here:
 // https://api.coingecko.com/api/v3/coins

@@ -26,8 +26,11 @@
 
 Inkplate display(INKPLATE_1BIT); // Create an object on Inkplate library and also set library into 1-bit mode (BW)
 
+static const char* TAG = "MyModule";
+
 void setup()
 {
+    ESP_LOGI(TAG, "Baud rate error %.1f%%. Requested: baud, actual: baud");
     display.begin();        // Init Inkplate library (you should call this function ONLY ONCE)
     display.clearDisplay(); // Clear frame buffer of display
     display.display();      // Put clear image on display
