@@ -37,24 +37,12 @@ char dateStr[25] = "";
 
 void setup() {
     Serial.begin(115200); 
-    Serial.print(78);
 
     network.begin(); 
-
-    Serial.print("PreInit");
 
     display.begin();        // Init Inkplate library (you should call this function ONLY ONCE)
     display.clearDisplay(); // Clear frame buffer of display
     display.display();      // Put clear image on display
-
-    display.setFont(&Lato_Regular20pt7b);
-    display.setTextSize(1); 
-    display.setCursor(10, 400);
-    display.print("22:02");
-    display.setFont(&Lato_Light20pt7b);
-    display.print(" Montag 08. Februar");
-
-    display.display();
 }
 
 void loop() {
@@ -63,7 +51,8 @@ void loop() {
 
     display.clearDisplay(); // Clear frame buffer of display
 
-    drawTitle();    
+    drawTitle(); 
+    drawCalendar(); 
 
     // Refresh full screen every fullRefresh times, defined above
     if (refreshes % fullRefresh == 0)
@@ -84,4 +73,13 @@ void drawTitle() {
     display.setFont(&Lato_Light30pt7b);
     display.print(" "); 
     display.print(dateStr);
+}
+
+void drawCalendar() {
+    display.setFont(&Lato_Bold20pt7b);
+    display.setTextSize(1); 
+    display.setCursor(10, 120);
+    display.print("Dieses");
+    display.setFont(&Lato_Light20pt7b);
+    display.print(" Woche"); 
 }

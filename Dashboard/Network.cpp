@@ -11,7 +11,7 @@ char weekDays[12][12] = {
 };
 
 char months[12][12] = {
-    "Januar", "Februar", "Maerz", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"
+    "Januar", "Februar", "M\x84rz", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"
 };
 
 
