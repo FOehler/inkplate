@@ -1,21 +1,21 @@
-var express = require('express');        
-var app = express();                 
-var bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-var port = process.env.PORT || 8080;  
+/* ============================== Calendar Router ============================== */
 
+var express = require('express');        
 var nextPrimaryEvents; 
 var nextSandraEvents;
 var nextEntsorgungEvents;
 var oauthClient; 
 
-// TODO: Behaviour when one calendar has no events
+class calendarEvent {
+  constructor(title, startDate, endDate) {
+    this.title = title;
+    this.startDate = startDate;
+    this.endDate = endDate;
+  }
+}
 
-
-// Calendar API ----------------------------------------
-const router = express.Router();
-router.get('/', async (req, res, next) => {
+const calendarRouter = express.Router();
+calendarRouter.get('/', async (req, res, next) => {
     try {
       console.log('Received a Calendar API call!');
       getEvents(oauthClient);
@@ -67,20 +67,7 @@ function getJson(nextEvents) {
   return JSON.parse(text)
 }
 
-class calendarEvent {
-  constructor(title, startDate, endDate) {
-    this.title = title;
-    this.startDate = startDate;
-    this.endDate = endDate;
-  }
-}
-// -----------------------------------------------------
-
-app.use('/calendar', router);
-app.listen(port);
-console.log('Listening on port ' + port);
-
-/* ============================== GOOGLE CALENDAR LOGIC ============================== */
+// Google Calendar Logic-----------------------------------------------------
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
@@ -196,4 +183,4 @@ function getEvents(auth) {
     });
   }
   
-
+  module.exports = calendarRouter; 
