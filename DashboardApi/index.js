@@ -10,6 +10,9 @@ var nextSandraEvents;
 var nextEntsorgungEvents;
 var oauthClient; 
 
+// TODO: Behaviour when one calendar has no events
+
+
 // Calendar API ----------------------------------------
 const router = express.Router();
 router.get('/', async (req, res, next) => {
@@ -32,20 +35,22 @@ function getJson(nextEvents) {
   calendarEvents = [];
   for (i = 0; i < nextEvents.length; i++) {
     currentEvent = nextEvents[i]; 
-    if (currentEvent.start.date == undefined) {
-      startDate = currentEvent.start.dateTime
-    } else {
-      startDate = currentEvent.start.date
-    }
-    if (currentEvent.start.date == undefined) {
-      endDate = currentEvent.end.dateTime
-    } else {
-      endDate = currentEvent.end.date
-    }
-    calendarEvents.push(new calendarEvent(currentEvent.summary, startDate, endDate))
+    if (currentEvent != undefined) {
+      if (currentEvent.start.date == undefined || currentEvent.start == undefined) {
+        startDate = currentEvent.start.dateTime
+      } else {
+        startDate = currentEvent.start.date
+      }
+      if (currentEvent.end.date == undefined || currentEvent.end == undefined) {
+        endDate = currentEvent.end.dateTime
+      } else {
+        endDate = currentEvent.end.date
+      }
+      calendarEvents.push(new calendarEvent(currentEvent.summary, startDate, endDate))
+    }    
+    
   }
   calendarEvents.sort( (a, b) => Date.parse(a.startDate) - Date.parse(b.startDate) )
-  console.log(calendarEvents);
   var text = `{ "events" : [`;
   for(i = 0; i < calendarEvents.length; i++) {
     currentEvent = calendarEvents[i]; 
@@ -58,6 +63,7 @@ function getJson(nextEvents) {
     }
   }
   text = text + `]}`
+  console.log(text); 
   return JSON.parse(text)
 }
 
