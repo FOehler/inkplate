@@ -15,7 +15,7 @@ char weekDaysLong[7][12] = {
 };
 
 char months[12][12] = {
-    "Januar", "Februar", "M\x84rz", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"
+    "Januar", "Februar", "Maerz", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"
 };
 
 
@@ -47,6 +47,7 @@ void Network::begin()
 
 void Network::getTime(char *timeStr)
 {
+    Serial.println("Getting Time"); 
     // Get seconds since 1.1.1970.
     time_t nowSecs = time(nullptr);
 
@@ -70,6 +71,7 @@ void Network::getTime(char *timeStr)
 
 void Network::getDateStr(char *dateStr) 
 {
+    Serial.println("Getting Date String"); 
     // Seconds since 1.1.1970.
     time_t nowSecs = time(nullptr);
 
@@ -116,6 +118,7 @@ void Network::setTime()
 
 bool Network::getCalendarItems(CalendarDay* calendarData[6])
 {
+    Serial.println("Getting Calendar Data"); 
     bool f = 0;
     HTTPClient http;
 
@@ -192,6 +195,64 @@ bool Network::getCalendarItems(CalendarDay* calendarData[6])
 
     // end http
     http.end();
+
+    return !f;
+}
+
+bool Network::getWeatherData(WeatherData* weatherData)
+{
+    Serial.println("Getting Weather Data"); 
+    bool f = 0;
+    HTTPClient http;
+
+    http.useHTTP10(true);
+    http.begin(weatherApi);
+    Serial.println("Weather Api configured to: ");
+    Serial.println(weatherApi);
+    delay(300);
+
+    // Actually do request
+    int httpCode = http.GET();
+    if (httpCode == 200)
+    {
+        Serial.println("Data received..."); 
+        DynamicJsonDocument doc(2048);
+        deserializeJson(doc, http.getStream());
+        weatherData->currentId = doc["current"]["id"].as<int>();
+        weatherData->currentTemp = doc["current"]["temp"].as<int>();
+        weatherData->nextDayId = doc["nextDay"]["id"].as<int>();
+        weatherData->nextDayTemp = doc["nextDay"]["temp"].as<int>();
+        for (int i = 0; i < 4; i++) {
+            weatherData->hourlyHourOfDay[i] = doc["hourly"][i]["hourOfDay"].as<int>(); 
+            weatherData->hourlyId[i] = doc["hourly"][i]["id"].as<int>(); 
+            weatherData->hourlyTemp[i] = doc["hourly"][i]["temp"].as<int>(); 
+        }
+        Serial.println("Weather data stored..."); 
+        long n = 0;
+    }
+    else
+    {
+        Serial.println("Weather Request failed, HTTP Code = ");
+        Serial.println(httpCode);
+        f = 1;
+    }
+
+    // end http
+    http.end();
+
+    // get next week day
+    time_t nowSecs = time(nullptr);
+    struct tm timeinfo;
+    gmtime_r(&nowSecs, &timeinfo);
+    int dayWeek = ((long)((nowSecs + 3600L * timeZone) / 86400L) + 3) % 7;
+    int nextDayWeek = dayWeek + 2; 
+    if (nextDayWeek == 7) {
+        nextDayWeek = 0; 
+    }
+    if (nextDayWeek == 8) {
+        nextDayWeek = 1; 
+    }
+    weatherData->nextDayWeekday = weekDays[dayWeek]; 
 
     return !f;
 }

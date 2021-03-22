@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "Models/CalendarDay.h"
+#include "Models/WeatherData.h"
 
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -14,9 +15,11 @@ extern const char* pass;
 
 // apis
 extern const char* calendarApi; 
+extern const char* weatherApi; 
 
 // data holders 
 extern CalendarDay* calendarData[6];
+extern WeatherData* weatherData; 
 
 #ifndef NETWORK_H
 #define NETWORK_H
@@ -31,6 +34,7 @@ class Network
     void getTime(char *timeStr);
     void getDateStr(char *dateStr); 
     bool getCalendarItems(CalendarDay* calendarData[6]);
+    bool getWeatherData(WeatherData* weatherData);
 
     // Used to store loaction woeid (world id), set in findCity()
     int location = -1;

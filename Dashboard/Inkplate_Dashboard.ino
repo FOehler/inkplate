@@ -30,6 +30,7 @@ const char *ssid = "WN-849E40";
 const char *pass = "3928253b3b";
 
 const char *calendarApi = "http://192.168.0.21:8080/calendar";
+const char *weatherApi = "http://192.168.0.21:8080/weather";
 
 // ----------------------------------
 
@@ -45,6 +46,8 @@ long refreshes = 0;
 const int fullRefresh = 10;
 
 CalendarDay* calendarData[6];
+WeatherData* weatherData; 
+
 char currentTime[16] = "9:41";
 char dateStr[25] = ""; 
 char news[12][40] = {
@@ -61,7 +64,6 @@ char news[12][40] = {
     "0F",
     "0F",
 };
-const uint8_t *logos[16] = {icon_sn, icon_sl, icon_h, icon_t, icon_hr, icon_lr, icon_s, icon_hc, icon_lc, icon_c};
 const uint8_t *s_logos[16] = {icon_s_sn, icon_s_sl, icon_s_h, icon_s_t, icon_s_hr, icon_s_lr, icon_s_s, icon_s_hc, icon_s_lc, icon_s_c};
 
 
@@ -70,6 +72,7 @@ void drawCalendar();
 void drawWeather();
 void drawNews();
 int drawDay(int offset, int iterator);
+int getIconIdFromWeatherId(int weatherId);
 void drawNewsItem(char* news, int offset); 
 
 void setup() {
@@ -83,6 +86,7 @@ void setup() {
     {
         calendarData[i] = new CalendarDay(); 
     }
+    weatherData = new WeatherData(); 
 
     delay(2000);
     network.begin(); 
@@ -106,7 +110,7 @@ void loop() {
     else
         display.partialUpdate();
 
-    esp_sleep_enable_timer_wakeup(10000L * DELAY_MS);
+    esp_sleep_enable_timer_wakeup(5000L * DELAY_MS);
     (void)esp_light_sleep_start();
     ++refreshes;
 }
@@ -135,7 +139,6 @@ void drawCalendar() {
         display.print("Could not reach Calendar API!");
         delay(1000);
     }
-    network.getCalendarItems(calendarData);
     int offset = 180; 
     for (int i = 0; i < calendarData[0]->daysToDisplay; i++) {
         int additionalOffset = drawDay(offset, i); 
@@ -144,12 +147,85 @@ void drawCalendar() {
 }
 
 void drawWeather() {
+    while (!network.getWeatherData(weatherData)) {
+        Serial.println("Failed getting data, retrying");
+        display.print("Could not reach Calendar API!");
+        delay(1000);
+    }
     display.setFont(&Lato_Bold20pt7b);
     display.setTextSize(1); 
     display.setCursor(400, 120);
     display.print("Wetter");
-    display.drawBitmap(400, 180, s_logos[1], 48, 48, BLACK, WHITE);
-    display.drawBitmap(500, 180, s_logos[2], 48, 48, BLACK, WHITE);
+    // Current Day
+    display.setFont(&Lato_Bold30pt7b);
+    display.setCursor(460, 185);
+    display.print(String(weatherData->currentTemp) + "°C");
+    display.drawBitmap(400, 140, s_logos[getIconIdFromWeatherId(weatherData->currentId)], 48, 48, BLACK, WHITE);
+    // Hourly
+    int offset = 80; 
+    int iconSize = 48; 
+    int titleOffset = 6; 
+    for (int i = 0; i < 5; i++) {
+        int horizontalPosition = 400 + offset * i; 
+        if (i < 4) {
+            display.setFont(&Lato_Bold15pt7b);
+            display.setCursor(horizontalPosition + titleOffset, 220);
+            String hourString = String(weatherData->hourlyHourOfDay[i]); 
+            if (hourString.length() == 1) {
+                hourString = "0" + hourString; 
+            }
+            display.print(hourString); 
+            display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherData->hourlyId[i])], iconSize, iconSize, BLACK, WHITE);
+            display.setFont(&Lato_Light15pt7b);
+            display.setCursor(horizontalPosition, 310);
+            display.print(String(weatherData->hourlyTemp[i]) + "°C");
+        }
+        else {
+            display.setFont(&Lato_Bold15pt7b);
+            display.setCursor(horizontalPosition + titleOffset, 220);
+            display.print(weatherData->nextDayWeekday); 
+            display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherData->nextDayId)], iconSize, iconSize, BLACK, WHITE);
+            display.setFont(&Lato_Light15pt7b);
+            display.setCursor(horizontalPosition, 310);
+            display.print(String(weatherData->nextDayTemp) + "°C");
+        }
+    }
+}
+
+int getIconIdFromWeatherId(int weatherId) {
+    // {"sn", "sl", "h",   "t",      "hr",  "lr",      "s",     "hc",      "lc",      "c"};
+    //   0     1     2      3         4      5          6        7          8          9
+    // snow   sleet hail thunder heavyRain lightRain Showers heavyCloud lightCloud Clear
+    if (weatherId < 300) {
+        return 3; 
+    }
+    if (weatherId < 501) {
+        return 5; 
+    }
+    if (weatherId < 511) {
+        return 4; 
+    }
+    if (weatherId < 600) {
+        return 6; 
+    }
+    if (weatherId == 611) {
+        return 1; 
+    }
+    if (weatherId < 700) {
+        return 0; 
+    }
+    if (weatherId < 800) {
+        return 8; 
+    }
+    if (weatherId == 800) {
+        return 9;
+    }
+    if (weatherId < 803) {
+        return 8; 
+    }
+    if (weatherId < 805) {
+        return 7; 
+    }
 }
 
 int drawDay(int topOffset, int iterator) {
@@ -181,7 +257,6 @@ int drawDay(int topOffset, int iterator) {
             k += 1; 
         }
     }
-    Serial.println("k = " + String(k)); 
     if (k == 1) { // If there is only one event, a bigger vertical offset is required
         return k * offsetPerEvent + 15; 
     }
@@ -191,16 +266,16 @@ int drawDay(int topOffset, int iterator) {
 void drawNews() {
     display.setFont(&Lato_Bold20pt7b);
     display.setTextSize(1); 
-    display.setCursor(400, 300);
+    display.setCursor(400, 350);
     display.print("News");
     strncpy(news[0], "- Rund um den Globus fordern heute die ", sizeof(news[0]));
     strncpy(news[1], "   Frauen mehr Gerechtigkeit", sizeof(news[1]));
     strncpy(news[2], "- Die UBS hofft in Paris auf gnädige  ", sizeof(news[0]));
     strncpy(news[3], "   Richter", sizeof(news[1]));
-    drawNewsItem(news[0], 330); 
-    drawNewsItem(news[1], 360); 
-    drawNewsItem(news[2], 390); 
-    drawNewsItem(news[3], 420); 
+    drawNewsItem(news[0], 380); 
+    drawNewsItem(news[1], 410); 
+    drawNewsItem(news[2], 440); 
+    drawNewsItem(news[3], 470); 
 }
 
 void drawNewsItem(char* newsText, int offset) {
