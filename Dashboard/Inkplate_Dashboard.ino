@@ -38,6 +38,8 @@ const char *weatherApi = "http://192.168.0.21:8080/weather";
 #include "icons.h"
 
 #define DELAY_MS 5000
+#define uS_TO_S_FACTOR 1000000 // Conversion factor for micro seconds to seconds
+#define TIME_TO_SLEEP  20      // How long ESP32 will be in deep sleep (in seconds)
 
 Inkplate display(INKPLATE_1BIT);        // Create an object on Inkplate library and also set library into 1 Bit mode (BW)
 
@@ -70,7 +72,9 @@ const uint8_t *s_logos[16] = {icon_s_sn, icon_s_sl, icon_s_h, icon_s_t, icon_s_h
 
 
 void drawTitle();
+void retrieveCalendarData(); 
 void drawCalendar();
+void retrieveWeatherData(); 
 void drawWeather();
 void drawNews();
 void drawVoltage(); 
@@ -82,10 +86,7 @@ void drawNewsItem(char* news, int offset);
 void setup() {
     Wire.begin();
     Serial.begin(115200); 
-
     display.begin();        // Init Inkplate library (you should call this function ONLY ONCE)
-    display.clearDisplay(); // Clear frame buffer of display
-    display.display();      // Put clear image on display
 
     for(size_t i = 0; i != 6; ++i)
     {
@@ -93,35 +94,51 @@ void setup() {
     }
     weatherData = new WeatherData(); 
 
-    delay(2000);
     network.begin(); 
-}
-
-void loop() {
     network.getTime(currentTime);
     network.getDateStr(dateStr);
 
-    display.clearDisplay(); // Clear frame buffer of display
+    retrieveCalendarData();
+    retrieveWeatherData(); 
 
+    display.clearDisplay(); // Clear frame buffer of display
     drawTitle(); 
     drawCalendar(); 
-    
     drawWeather(); 
-    drawNews(); 
-
+    drawNews();
     drawVoltage(); 
-
     drawInteriorTemp(); 
+    display.display();
 
-    // Refresh full screen every fullRefresh times, defined above
-    if (refreshes % fullRefresh == 0)
-        display.display();
-    else
-        display.partialUpdate();
+    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR); // Activate wake-up timer -- wake up after 20s here
+    esp_deep_sleep_start();      
+}
 
-    esp_sleep_enable_timer_wakeup(5000L * DELAY_MS);
-    (void)esp_light_sleep_start();
-    ++refreshes;
+void loop() {
+    // network.getTime(currentTime);
+    // network.getDateStr(dateStr);
+
+    // display.clearDisplay(); // Clear frame buffer of display
+
+    // drawTitle(); 
+    // drawCalendar(); 
+    
+    // drawWeather(); 
+    // drawNews(); 
+
+    // drawVoltage(); 
+
+    // drawInteriorTemp(); 
+
+    // // Refresh full screen every fullRefresh times, defined above
+    // if (refreshes % fullRefresh == 0)
+    //     display.display();
+    // else
+    //     display.partialUpdate();
+
+    // esp_sleep_enable_timer_wakeup(5000L * DELAY_MS);
+    // (void)esp_light_sleep_start();
+    // ++refreshes;
 }
 
 void drawTitle() {
@@ -141,13 +158,7 @@ void drawCalendar() {
     display.print("Diese");
     display.setFont(&Lato_Light20pt7b);
     display.print(" Woche"); 
-
-    while (!network.getCalendarItems(calendarData))
-    {
-        Serial.println("Failed getting data, retrying");
-        display.print("Could not reach Calendar API!");
-        delay(1000);
-    }
+  
     int offset = 180; 
     for (int i = 0; i < calendarData[0]->daysToDisplay; i++) {
         int additionalOffset = drawDay(offset, i); 
@@ -155,12 +166,16 @@ void drawCalendar() {
     }
 }
 
-void drawWeather() {
-    while (!network.getWeatherData(weatherData)) {
+void retrieveCalendarData() {
+    while (!network.getCalendarItems(calendarData))
+    {
         Serial.println("Failed getting data, retrying");
         display.print("Could not reach Calendar API!");
         delay(1000);
     }
+}
+
+void drawWeather() {
     display.setFont(&Lato_Bold20pt7b);
     display.setTextSize(1); 
     display.setCursor(400, 120);
@@ -210,6 +225,14 @@ void drawWeather() {
             }
             display.print(tempString + "C");
         }
+    }
+}
+
+void retrieveWeatherData() {
+    while (!network.getWeatherData(weatherData)) {
+        Serial.println("Failed getting data, retrying");
+        display.print("Could not reach Calendar API!");
+        delay(1000);
     }
 }
 
