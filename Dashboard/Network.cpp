@@ -3,11 +3,15 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include <string> 
-
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 
-char weekDays[12][12] = {
-    "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag",
+char weekDays[7][7] = {
+    "So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"
+};
+
+char weekDaysLong[7][12] = {
+    "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"
 };
 
 char months[12][12] = {
@@ -79,7 +83,7 @@ void Network::getDateStr(char *dateStr)
     std::sprintf(monthChar, "%d", monthDay);
     int month = timeinfo.tm_mon; 
     
-    std::string stringCopy  = std::string(weekDays[dayWeek]) + ' ' + monthChar + '.' + ' ' + months[month]; 
+    std::string stringCopy  = std::string(weekDaysLong[dayWeek]) + ' ' + monthChar + '.' + ' ' + months[month]; 
     // Copy day data to globals in main file
     strncpy(dateStr, stringCopy.c_str(), 25);
 }
@@ -108,4 +112,86 @@ void Network::setTime()
 
     Serial.print(F("Current time: "));
     Serial.print(asctime(&timeinfo));
+}
+
+bool Network::getCalendarItems(CalendarDay* calendarData[6])
+{
+    bool f = 0;
+    HTTPClient http;
+
+    http.useHTTP10(true);
+    http.begin(calendarApi);
+    Serial.println("Calendar Api configured to: ");
+    Serial.println(calendarApi);
+    delay(300);
+
+    // Actually do request
+    int httpCode = http.GET();
+
+    Serial.println("httpCode");
+    if (httpCode == 200)
+    {
+        Serial.println("Data received..."); 
+        DynamicJsonDocument doc(2048);
+        deserializeJson(doc, http.getStream());
+        int lastMonthDay = -1; 
+        int k = 0; 
+        calendarData[0]->daysToDisplay = 0; 
+        for(int i = 0; i < 6; i++) {
+            struct tm tmStart, tmEnd;
+            String titleString = doc["events"][i]["title"].as<String>(); 
+            Serial.println("Retreiving event: "  + titleString); 
+            
+            String startString = doc["events"][i]["start"].as<String>(); 
+            String timeString = " "; 
+            if (startString.length() == 10) {
+                strptime(startString.c_str(), "%Y-%m-%d", &tmStart);
+                timeString = ""; 
+            } else {
+                String endString = doc["events"][i]["end"].as<String>(); 
+                strptime(endString.c_str(), "%Y-%m-%dT%H:%M:%S", &tmEnd);
+                strptime(startString.c_str(), "%Y-%m-%dT%H:%M:%S", &tmStart);
+                String startMin = String(tmStart.tm_min); 
+                if (startMin.length() == 1) {
+                    startMin = "0" + startMin; 
+                }
+                String endMin = String(tmEnd.tm_min); 
+                if (endMin.length() == 1) {
+                    endMin = "0" + endMin; 
+                }
+                timeString = String(tmStart.tm_hour) + ":" + startMin + " - " + String(tmEnd.tm_hour) + ":" + endMin; 
+            }
+            String weekDayString = String(weekDays[tmStart.tm_wday]); 
+            String monthDayString; 
+            monthDayString = String(tmStart.tm_mday) + "."; 
+            if (lastMonthDay == tmStart.tm_mday) {
+                Serial.println("Same Day Event: "  + titleString); 
+                k += 1; 
+                calendarData[i-1]->time[k] = timeString; 
+                calendarData[i-1]->title[k] = titleString; 
+            }
+            else {
+                k = 0; 
+                calendarData[0]->daysToDisplay += 1; 
+                calendarData[i]->day = weekDayString; 
+                calendarData[i]->date = monthDayString; 
+                calendarData[i]->time[k] = timeString; 
+                calendarData[i]->title[k] = titleString; 
+            }
+            lastMonthDay = tmStart.tm_mday; 
+        }
+        Serial.println("Data stored to array..."); 
+        long n = 0;
+    }
+    else
+    {
+        Serial.println("Calendar Request failed, HTTP Code = ");
+        Serial.println(httpCode);
+        f = 1;
+    }
+
+    // end http
+    http.end();
+
+    return !f;
 }

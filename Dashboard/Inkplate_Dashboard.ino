@@ -1,7 +1,6 @@
-#include <string> 
-#include "HTTPClient.h"                 // Include library for HTTPClient
 #include "Inkplate.h"                   // Include Inkplate library to the sketch
 #include "Network.h"
+
 
 #include "D:/git/inkplate/Fonts/Lato_Light40pt7b.h"           // https://rop.nl/truetype2gfx/
 #include "D:/git/inkplate/Fonts/Lato_Light30pt7b.h"           // https://rop.nl/truetype2gfx/
@@ -19,6 +18,8 @@
 #include "D:/git/inkplate/Fonts/Lato_Bold15pt7b.h"            // https://rop.nl/truetype2gfx/
 #include "D:/git/inkplate/Fonts/Lato_Bold10pt7b.h"            // https://rop.nl/truetype2gfx/
 
+#include <string> 
+
 // ---------- Configuration -------------:
 
 // Time zone for adding hours
@@ -28,11 +29,13 @@ int timeZone = 1;
 const char *ssid = "WN-849E40";
 const char *pass = "3928253b3b";
 
+const char *calendarApi = "http://192.168.0.21:8080/calendar";
+
 // ----------------------------------
 
 #include "icons.h"
 
-#define DELAY_MS 15000
+#define DELAY_MS 5000
 
 Inkplate display(INKPLATE_1BIT);        // Create an object on Inkplate library and also set library into 1 Bit mode (BW)
 
@@ -41,12 +44,13 @@ Network network;
 long refreshes = 0;
 const int fullRefresh = 10;
 
+CalendarDay* calendarData[6];
 char currentTime[16] = "9:41";
 char dateStr[25] = ""; 
 char news[12][40] = {
     "0F",
-    "1F",
-    "2F",
+    "0F",
+    "0F",
     "0F",
     "0F",
     "0F",
@@ -65,17 +69,23 @@ void drawTitle();
 void drawCalendar();
 void drawWeather();
 void drawNews();
-void drawDay(int offset);
+int drawDay(int offset, int iterator);
 void drawNewsItem(char* news, int offset); 
 
 void setup() {
     Serial.begin(115200); 
 
-    network.begin(); 
-
     display.begin();        // Init Inkplate library (you should call this function ONLY ONCE)
     display.clearDisplay(); // Clear frame buffer of display
     display.display();      // Put clear image on display
+
+    for(size_t i = 0; i != 6; ++i)
+    {
+        calendarData[i] = new CalendarDay(); 
+    }
+
+    delay(2000);
+    network.begin(); 
 }
 
 void loop() {
@@ -96,7 +106,7 @@ void loop() {
     else
         display.partialUpdate();
 
-    esp_sleep_enable_timer_wakeup(1000L * DELAY_MS);
+    esp_sleep_enable_timer_wakeup(10000L * DELAY_MS);
     (void)esp_light_sleep_start();
     ++refreshes;
 }
@@ -119,9 +129,18 @@ void drawCalendar() {
     display.setFont(&Lato_Light20pt7b);
     display.print(" Woche"); 
 
-    drawDay(180); 
-    drawDay(340); 
-    drawDay(500); 
+    while (!network.getCalendarItems(calendarData))
+    {
+        Serial.println("Failed getting data, retrying");
+        display.print("Could not reach Calendar API!");
+        delay(1000);
+    }
+    network.getCalendarItems(calendarData);
+    int offset = 180; 
+    for (int i = 0; i < calendarData[0]->daysToDisplay; i++) {
+        int additionalOffset = drawDay(offset, i); 
+        offset += additionalOffset; 
+    }
 }
 
 void drawWeather() {
@@ -133,36 +152,40 @@ void drawWeather() {
     display.drawBitmap(500, 180, s_logos[2], 48, 48, BLACK, WHITE);
 }
 
-void drawDay(int topOffset) {
-    display.setCursor(10, topOffset);
-    display.setFont(&Lato_Bold30pt7b);
-    display.setTextSize(1); 
-    display.print("Mo");
-    display.setCursor(25, topOffset + 40);
-    display.setFont(&Lato_Light15pt7b);
-    display.setTextSize(1); 
-    display.print("08.");
+int drawDay(int topOffset, int iterator) {
+    int offsetPerEvent = 80; 
+
+    if (calendarData[iterator]->title[0].length() > 3) {
+        display.setCursor(10, topOffset);
+        display.setFont(&Lato_Bold30pt7b);
+        display.setTextSize(1); 
+        display.print(calendarData[iterator]->day);
+        display.setCursor(25, topOffset + 40);
+        display.setFont(&Lato_Light15pt7b);
+        display.setTextSize(1); 
+        display.print(calendarData[iterator]->date);
+    }
 
     int leftOffset = 120;
-    display.setCursor(leftOffset, topOffset - 20);
-    display.setFont(&Lato_Bold15pt7b);
-    display.setTextSize(1); 
-    display.print("Elif & Simon");
-    display.setCursor(leftOffset, topOffset + 15);
-    display.setFont(&Lato_Light15pt7b);
-    display.setTextSize(1); 
-    display.print("18:00 - 22:00");
-    display.setCursor(leftOffset, topOffset - 20 + 70);
-    display.setFont(&Lato_Bold15pt7b);
-    display.setTextSize(1); 
-    display.print("Fabienne & Michi");
-    display.setCursor(leftOffset, topOffset + 15 + 70);
-    display.setFont(&Lato_Light15pt7b);
-    display.setTextSize(1); 
-    display.print("10:00 - 23:00");
-    display.setCursor(leftOffset, topOffset - 20 + 140);
-    display.setFont(&Lato_Bold15pt7b);
-    display.setTextSize(1); 
+    int k = 0; 
+    for (int i = 0; i < 6; i++) {
+        if (calendarData[iterator]->title[i].length() > 3) {
+            display.setCursor(leftOffset, topOffset - 20 + k * 70);
+            display.setFont(&Lato_Bold15pt7b);
+            display.setTextSize(1); 
+            display.print(calendarData[iterator]->title[i]);
+            display.setCursor(leftOffset, topOffset + 15 + k * 70);
+            display.setFont(&Lato_Light15pt7b);
+            display.setTextSize(1); 
+            display.print(calendarData[iterator]->time[i]);
+            k += 1; 
+        }
+    }
+    Serial.println("k = " + String(k)); 
+    if (k == 1) { // If there is only one event, a bigger vertical offset is required
+        return k * offsetPerEvent + 15; 
+    }
+    return k * offsetPerEvent; 
 }
 
 void drawNews() {
