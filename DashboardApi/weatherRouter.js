@@ -2,7 +2,6 @@
 
 const express = require('express');       
 const https = require('https')
-const bodyParser = require('body-parser')
 
 const location_lon = "8.6989"; 
 const location_lat = "47.2569"; 
