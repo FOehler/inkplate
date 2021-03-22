@@ -1,6 +1,7 @@
+#include <SHT21.h>
+
 #include "Inkplate.h"                   // Include Inkplate library to the sketch
 #include "Network.h"
-
 
 #include "D:/git/inkplate/Fonts/Lato_Light40pt7b.h"           // https://rop.nl/truetype2gfx/
 #include "D:/git/inkplate/Fonts/Lato_Light30pt7b.h"           // https://rop.nl/truetype2gfx/
@@ -47,6 +48,7 @@ const int fullRefresh = 10;
 
 CalendarDay* calendarData[6];
 WeatherData* weatherData; 
+SHT21 sht; 
 
 char currentTime[16] = "9:41";
 char dateStr[25] = ""; 
@@ -72,11 +74,13 @@ void drawCalendar();
 void drawWeather();
 void drawNews();
 void drawVoltage(); 
+void drawInteriorTemp(); 
 int drawDay(int offset, int iterator);
 int getIconIdFromWeatherId(int weatherId);
 void drawNewsItem(char* news, int offset); 
 
 void setup() {
+    Wire.begin();
     Serial.begin(115200); 
 
     display.begin();        // Init Inkplate library (you should call this function ONLY ONCE)
@@ -106,6 +110,8 @@ void loop() {
     drawNews(); 
 
     drawVoltage(); 
+
+    drawInteriorTemp(); 
 
     // Refresh full screen every fullRefresh times, defined above
     if (refreshes % fullRefresh == 0)
@@ -163,7 +169,10 @@ void drawWeather() {
     display.setFont(&Lato_Bold30pt7b);
     display.setCursor(460, 185);
     String tempString = String(weatherData->currentTemp); 
-    display.print(tempString + "C");
+    display.print(tempString + " C");
+    display.setFont(&Lato_Bold10pt7b);
+    display.setCursor(460 + tempString.length() * 35, 155);
+    display.print("o");
     display.drawBitmap(400, 140, s_logos[getIconIdFromWeatherId(weatherData->currentId)], 48, 48, BLACK, WHITE);
     // Hourly
     int offset = 80; 
@@ -183,6 +192,9 @@ void drawWeather() {
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
             String tempString = String(weatherData->hourlyTemp[i]); 
+            if (tempString.length() == 1) {
+                tempString = " " + tempString; 
+            }
             display.print(tempString + "C");
         }
         else {
@@ -193,6 +205,9 @@ void drawWeather() {
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
             String tempString = String(weatherData->nextDayTemp); 
+            if (tempString.length() == 1) {
+                tempString = " " + tempString; 
+            }
             display.print(tempString + "C");
         }
     }
@@ -297,4 +312,28 @@ void drawVoltage() {
     display.setCursor(745, 20);
     display.print(voltage, 2);
     display.print('V');
+}
+
+void drawInteriorTemp() {
+    float temp = sht.getTemperature();  // get temp from SHT 
+    float humidity = sht.getHumidity(); // get temp from SHT
+
+    int xStart = 645; 
+    int yStart = 185; 
+    int houseWidth = 40; 
+    int houseHeight = 32; 
+    display.drawLine(xStart, yStart, xStart, yStart - houseHeight, BLACK); 
+    display.drawLine(xStart, yStart - houseHeight, xStart + houseWidth / 2, yStart - houseHeight - houseHeight / 2, BLACK); 
+    display.drawLine(xStart + houseWidth / 2, yStart - houseHeight - houseHeight / 2, xStart + houseWidth, yStart - houseHeight, BLACK); 
+    display.drawLine(xStart + houseWidth, yStart - houseHeight, xStart + houseWidth, yStart, BLACK); 
+    display.drawLine(xStart + houseWidth, yStart, xStart, yStart, BLACK); 
+
+    display.setFont(&Lato_Light15pt7b);
+    display.setCursor(700, 160);
+    display.print(temp, 1); 
+    display.print('C'); 
+    display.setCursor(700, 185);
+    display.print(humidity, 1); 
+    display.print('%'); 
+
 }

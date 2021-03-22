@@ -3,6 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "C:\\Users\\fabri\\Documents\\Arduino\\libraries\\SHT21-Arduino-Library-master",
                 "C:\\Users\\fabri\\OneDrive\\Dokumente\\Arduino\\libraries\\InkplateLibrary\\src",
                 "C:\\Users\\fabri\\OneDrive\\Dokumente\\Arduino\\libraries\\NTPClient",
                 "C:\\Users\\fabri\\OneDrive\\Dokumente\\Arduino\\libraries\\avr-debugger",
