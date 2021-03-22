@@ -45,7 +45,7 @@ weatherRouter.get('/', async (req, res, next) => {
       })
      
       await new Promise((resolve, reject) => {
-        setTimeout(() => resolve("done!"), 500)
+        setTimeout(() => resolve("done!"), 1000)
       }); 
       next();
     }
