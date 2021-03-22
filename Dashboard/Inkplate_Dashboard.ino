@@ -32,6 +32,7 @@ const char *pass = "3928253b3b";
 
 const char *calendarApi = "http://192.168.0.21:8080/calendar";
 const char *weatherApi = "http://192.168.0.21:8080/weather";
+const char *newsApi = "http://192.168.0.21:8080/news";
 
 // ----------------------------------
 
@@ -50,7 +51,9 @@ const int fullRefresh = 10;
 
 CalendarDay* calendarData[6];
 WeatherData* weatherData; 
+NewsData* newsData; 
 SHT21 sht; 
+
 
 char currentTime[16] = "9:41";
 char dateStr[25] = ""; 
@@ -75,13 +78,14 @@ void drawTitle();
 void retrieveCalendarData(); 
 void drawCalendar();
 void retrieveWeatherData(); 
+void retrieveNewsData(); 
 void drawWeather();
 void drawNews();
 void drawVoltage(); 
 void drawInteriorTemp(); 
 int drawDay(int offset, int iterator);
 int getIconIdFromWeatherId(int weatherId);
-void drawNewsItem(char* news, int offset); 
+void drawNewsItem(int offset); 
 
 void setup() {
     Wire.begin();
@@ -93,6 +97,7 @@ void setup() {
         calendarData[i] = new CalendarDay(); 
     }
     weatherData = new WeatherData(); 
+    newsData = new NewsData(); 
 
     network.begin(); 
     network.getTime(currentTime);
@@ -100,6 +105,7 @@ void setup() {
 
     retrieveCalendarData();
     retrieveWeatherData(); 
+    retrieveNewsData(); 
 
     display.clearDisplay(); // Clear frame buffer of display
     drawTitle(); 
@@ -312,21 +318,28 @@ void drawNews() {
     display.setTextSize(1); 
     display.setCursor(400, 360);
     display.print("News");
-    strncpy(news[0], "- Rund um den Globus fordern heute die ", sizeof(news[0]));
-    strncpy(news[1], "   Frauen mehr Gerechtigkeit", sizeof(news[1]));
-    strncpy(news[2], "- Die UBS hofft in Paris auf gnädige  ", sizeof(news[0]));
-    strncpy(news[3], "   Richter", sizeof(news[1]));
-    drawNewsItem(news[0], 390); 
-    drawNewsItem(news[1], 420); 
-    drawNewsItem(news[2], 450); 
-    drawNewsItem(news[3], 480); 
+    drawNewsItem(390); 
 }
 
-void drawNewsItem(char* newsText, int offset) {
+void drawNewsItem(int offset) {
+    int lineSpace = 20; 
     display.setFont(&Lato_Light10pt7b);
     display.setTextSize(1); 
-    display.setCursor(400, offset);
-    display.print(newsText);
+    for (int i = 0; i < 8; i++) {
+        display.setCursor(400, offset + i * lineSpace);
+        display.print("- "); 
+        String newsItem = newsData->newsText[i]; 
+        display.print(newsItem);
+    }
+    
+}
+
+void retrieveNewsData() {
+    while (!network.getNewsData(newsData)) {
+        Serial.println("Failed getting data, retrying");
+        display.print("Could not reach Calendar API!");
+        delay(1000);
+    }
 }
 
 void drawVoltage() {

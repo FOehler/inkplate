@@ -256,3 +256,40 @@ bool Network::getWeatherData(WeatherData* weatherData)
 
     return !f;
 }
+
+bool Network::getNewsData(NewsData* newsData)
+{
+    Serial.println("Getting News"); 
+    bool f = 0;
+    HTTPClient http;
+
+    http.useHTTP10(true);
+    http.begin(newsApi);
+    Serial.println("News Api configured to: ");
+    Serial.println(newsApi);
+    delay(300);
+
+    // Actually do request
+    int httpCode = http.GET();
+    if (httpCode == 200)
+    {
+        Serial.println("Data received..."); 
+        DynamicJsonDocument doc(2048);
+        deserializeJson(doc, http.getStream());
+        for (int i = 0; i < 10; i++) {
+            newsData->newsText[i] = doc["news"][i].as<String>(); 
+        }
+        Serial.println("News data stored..."); 
+        long n = 0;
+    }
+    else
+    {
+        Serial.println("News Request failed, HTTP Code = ");
+        Serial.println(httpCode);
+        f = 1;
+    }
+
+    // end http
+    http.end();
+    return !f;
+}

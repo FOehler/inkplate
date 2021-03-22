@@ -13,5 +13,8 @@ app.use('/calendar', calendarRouter);
 var weatherRouter = require('./weatherRouter');
 app.use('/weather', weatherRouter);
 
+var newsRouter = require('./newsRouter');
+app.use('/news', newsRouter);
+
 app.listen(port);
 console.log('Listening on port ' + port);
