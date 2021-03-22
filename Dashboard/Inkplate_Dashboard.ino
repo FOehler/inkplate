@@ -71,6 +71,7 @@ void drawTitle();
 void drawCalendar();
 void drawWeather();
 void drawNews();
+void drawVoltage(); 
 int drawDay(int offset, int iterator);
 int getIconIdFromWeatherId(int weatherId);
 void drawNewsItem(char* news, int offset); 
@@ -103,6 +104,8 @@ void loop() {
     
     drawWeather(); 
     drawNews(); 
+
+    drawVoltage(); 
 
     // Refresh full screen every fullRefresh times, defined above
     if (refreshes % fullRefresh == 0)
@@ -159,7 +162,8 @@ void drawWeather() {
     // Current Day
     display.setFont(&Lato_Bold30pt7b);
     display.setCursor(460, 185);
-    display.print(String(weatherData->currentTemp) + "°C");
+    String tempString = String(weatherData->currentTemp); 
+    display.print(tempString + "C");
     display.drawBitmap(400, 140, s_logos[getIconIdFromWeatherId(weatherData->currentId)], 48, 48, BLACK, WHITE);
     // Hourly
     int offset = 80; 
@@ -178,7 +182,8 @@ void drawWeather() {
             display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherData->hourlyId[i])], iconSize, iconSize, BLACK, WHITE);
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
-            display.print(String(weatherData->hourlyTemp[i]) + "°C");
+            String tempString = String(weatherData->hourlyTemp[i]); 
+            display.print(tempString + "C");
         }
         else {
             display.setFont(&Lato_Bold15pt7b);
@@ -187,14 +192,15 @@ void drawWeather() {
             display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherData->nextDayId)], iconSize, iconSize, BLACK, WHITE);
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
-            display.print(String(weatherData->nextDayTemp) + "°C");
+            String tempString = String(weatherData->nextDayTemp); 
+            display.print(tempString + "C");
         }
     }
 }
 
 int getIconIdFromWeatherId(int weatherId) {
-    // {"sn", "sl", "h",   "t",      "hr",  "lr",      "s",     "hc",      "lc",      "c"};
-    //   0     1     2      3         4      5          6        7          8          9
+    // {"sn", "sl", "h",   "t",      "hr",  "lr",      "s",     "hc",      "lc",    "c"};
+    //   0     1     2      3         4      5          6        7          8        9
     // snow   sleet hail thunder heavyRain lightRain Showers heavyCloud lightCloud Clear
     if (weatherId < 300) {
         return 3; 
@@ -266,16 +272,16 @@ int drawDay(int topOffset, int iterator) {
 void drawNews() {
     display.setFont(&Lato_Bold20pt7b);
     display.setTextSize(1); 
-    display.setCursor(400, 350);
+    display.setCursor(400, 360);
     display.print("News");
     strncpy(news[0], "- Rund um den Globus fordern heute die ", sizeof(news[0]));
     strncpy(news[1], "   Frauen mehr Gerechtigkeit", sizeof(news[1]));
     strncpy(news[2], "- Die UBS hofft in Paris auf gnädige  ", sizeof(news[0]));
     strncpy(news[3], "   Richter", sizeof(news[1]));
-    drawNewsItem(news[0], 380); 
-    drawNewsItem(news[1], 410); 
-    drawNewsItem(news[2], 440); 
-    drawNewsItem(news[3], 470); 
+    drawNewsItem(news[0], 390); 
+    drawNewsItem(news[1], 420); 
+    drawNewsItem(news[2], 450); 
+    drawNewsItem(news[3], 480); 
 }
 
 void drawNewsItem(char* newsText, int offset) {
@@ -283,4 +289,12 @@ void drawNewsItem(char* newsText, int offset) {
     display.setTextSize(1); 
     display.setCursor(400, offset);
     display.print(newsText);
+}
+
+void drawVoltage() {
+    float voltage = display.readBattery();
+    display.setFont(&Lato_Light10pt7b);
+    display.setCursor(745, 20);
+    display.print(voltage, 2);
+    display.print('V');
 }
