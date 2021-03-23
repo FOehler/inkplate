@@ -43,13 +43,10 @@ weatherRouter.get('/', async (req, res, next) => {
           }
           console.log(returnData);
           res.json(returnData); 
+          next();
         })          
       })
-     
-      await new Promise((resolve, reject) => {
-        setTimeout(() => resolve("done!"), 1000)
-      }); 
-      next();
+      
     }
     catch (error) {
         next(error);
