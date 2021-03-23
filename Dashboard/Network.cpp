@@ -228,7 +228,6 @@ bool Network::getWeatherData(WeatherData* weatherData)
             weatherData->hourlyTemp[i] = doc["hourly"][i]["temp"].as<int>(); 
         }
         Serial.println("Weather data stored..."); 
-        long n = 0;
     }
     else
     {
@@ -277,10 +276,12 @@ bool Network::getNewsData(NewsData* newsData)
         DynamicJsonDocument doc(2048);
         deserializeJson(doc, http.getStream());
         for (int i = 0; i < 10; i++) {
-            newsData->newsText[i] = doc["news"][i].as<String>(); 
+            newsData->newsLineNumbers[i] = doc["news"][i].size(); 
+            for (int k = 0; k < doc["news"][i].size(); k++) {
+                newsData->newsText[i][k] = doc["news"][i][k].as<String>(); 
+            }
         }
         Serial.println("News data stored..."); 
-        long n = 0;
     }
     else
     {

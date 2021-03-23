@@ -323,15 +323,24 @@ void drawNews() {
 
 void drawNewsItem(int offset) {
     int lineSpace = 20; 
+    int lengthCutoff = 400; 
     display.setFont(&Lato_Light10pt7b);
     display.setTextSize(1); 
-    for (int i = 0; i < 8; i++) {
-        display.setCursor(400, offset + i * lineSpace);
+    int lineNumber = 0;
+    int newsIterator = 0; 
+    while(lineNumber < 10) {
+        display.setCursor(400, offset + lineNumber * lineSpace);
         display.print("- "); 
-        String newsItem = newsData->newsText[i]; 
-        display.print(newsItem);
+        for (int k = 0; k < newsData->newsLineNumbers[newsIterator]; k++) {
+            display.print(newsData->newsText[newsIterator][k]); 
+            lineNumber++; 
+            display.setCursor(400, offset + lineNumber * lineSpace);
+            if (k < newsData->newsLineNumbers[newsIterator] - 1) {
+                display.print("   ");
+            }
+        }
+        newsIterator++; 
     }
-    
 }
 
 void retrieveNewsData() {
