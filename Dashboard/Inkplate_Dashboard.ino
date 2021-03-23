@@ -30,9 +30,9 @@ int timeZone = 1;
 const char *ssid = "WN-849E40";
 const char *pass = "3928253b3b";
 
-const char *calendarApi = "http://192.168.0.21:8080/calendar";
-const char *weatherApi = "http://192.168.0.21:8080/weather";
-const char *newsApi = "http://192.168.0.21:8080/news";
+const char *calendarApi = "http://192.168.0.25:8080/calendar";
+const char *weatherApi = "http://192.168.0.25:8080/weather";
+const char *newsApi = "http://192.168.0.25:8080/news";
 
 // ----------------------------------
 
@@ -40,7 +40,7 @@ const char *newsApi = "http://192.168.0.21:8080/news";
 
 #define DELAY_MS 5000
 #define uS_TO_S_FACTOR 1000000 // Conversion factor for micro seconds to seconds
-#define TIME_TO_SLEEP  20      // How long ESP32 will be in deep sleep (in seconds)
+#define TIME_TO_SLEEP  50      // How long ESP32 will be in deep sleep (in seconds)
 
 Inkplate display(INKPLATE_1BIT);        // Create an object on Inkplate library and also set library into 1 Bit mode (BW)
 
