@@ -64,6 +64,8 @@ void Network::getTime(char *timeStr)
     // Better defined modulo, in case timezone makes hours to go below 0
     hr = (hr % 24 + 24) % 24;
 
+    currentHour = hr; 
+
     // Adding time to '0' char makes it into whatever time char, for both digits
     timeStr[0] = hr / 10 + '0';
     timeStr[1] = hr % 10 + '0';

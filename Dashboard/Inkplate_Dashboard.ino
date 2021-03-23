@@ -41,6 +41,7 @@ const char *newsApi = "http://192.168.0.25:8080/news";
 #define DELAY_MS 5000
 #define uS_TO_S_FACTOR 1000000 // Conversion factor for micro seconds to seconds
 #define TIME_TO_SLEEP  50      // How long ESP32 will be in deep sleep (in seconds)
+#define TIME_TO_SLEEP_OVER_NIGHT  1200      // How long ESP32 will be in deep sleep (in seconds)
 
 Inkplate display(INKPLATE_1BIT);        // Create an object on Inkplate library and also set library into 1 Bit mode (BW)
 
@@ -116,7 +117,12 @@ void setup() {
     drawInteriorTemp(); 
     display.display();
 
-    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR); // Activate wake-up timer -- wake up after 20s here
+    if (network.currentHour > 23 && network.currentHour < 6) {
+        esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP_OVER_NIGHT * uS_TO_S_FACTOR); // Activate wake-up timer -- wake up after 20s here
+    }
+    else {
+        esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR); // Activate wake-up timer -- wake up after 20s here
+    }
     esp_deep_sleep_start();      
 }
 

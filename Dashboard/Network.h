@@ -42,6 +42,7 @@ class Network
 
     // Used to store loaction woeid (world id), set in findCity()
     int location = -1;
+    int currentHour = -1; 
 
   private:
     // Functions called from within our class
