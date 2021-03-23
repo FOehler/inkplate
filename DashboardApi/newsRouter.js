@@ -27,7 +27,6 @@ newsRouter.get('/', async (req, res, next) => {
         newsItem = newsItem.replace(/\u00d6/g, "Oe");
         newsItem = newsItem.replace(/\u00fc/g, "ue");
         newsItem = newsItem.replace(/\u00dc/g, "Ue");
-        console.log('Return news item: ' + newsItem)
         while (true) {
           var cutString = shorten(newsItem, lengthCutoff);
           newsLines.push(cutString); 

@@ -63,7 +63,7 @@ function getJson(nextEvents) {
     }
   }
   text = text + `]}`
-  console.log(text); 
+  console.log(text);
   return JSON.parse(text)
 }
 
