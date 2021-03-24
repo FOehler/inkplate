@@ -8,3 +8,8 @@ class NewsData {
     int newsLineNumbers[10]; 
     String newsText[10][4]; 
 };
+
+typedef struct {
+    int newsLineNumbers[10]; 
+    String newsText[10][4]; 
+} newsDataStruct; 

@@ -18,3 +18,16 @@ class WeatherData {
     int hourlyId[4]; 
     int hourlyTemp[4]; 
 };
+
+typedef struct {
+    int currentId; 
+    int currentTemp; 
+
+    int nextDayId; 
+    int nextDayTemp; 
+    String nextDayWeekday; 
+
+    int hourlyHourOfDay[4]; 
+    int hourlyId[4]; 
+    int hourlyTemp[4]; 
+} weatherDataStruct; 

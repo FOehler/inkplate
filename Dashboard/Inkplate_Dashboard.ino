@@ -1,6 +1,7 @@
 #include <SHT21.h>
 
 #include "Inkplate.h"                   // Include Inkplate library to the sketch
+#include "driver/rtc_io.h" //ESP32 library used for deep sleep and RTC wake up pins
 #include "Network.h"
 
 #include "D:/git/inkplate/Fonts/Lato_Light40pt7b.h"           // https://rop.nl/truetype2gfx/
@@ -43,6 +44,8 @@ const char *newsApi = "http://192.168.0.25:8080/news";
 #define TIME_TO_SLEEP  50      // How long ESP32 will be in deep sleep (in seconds)
 #define TIME_TO_SLEEP_OVER_NIGHT  1200      // How long ESP32 will be in deep sleep (in seconds)
 
+
+
 Inkplate display(INKPLATE_1BIT);        // Create an object on Inkplate library and also set library into 1 Bit mode (BW)
 
 Network network;
@@ -74,6 +77,10 @@ char news[12][40] = {
 };
 const uint8_t *s_logos[16] = {icon_s_sn, icon_s_sl, icon_s_h, icon_s_t, icon_s_hr, icon_s_lr, icon_s_s, icon_s_hc, icon_s_lc, icon_s_c};
 
+RTC_DATA_ATTR int apiCounter = 0;
+RTC_DATA_ATTR weatherDataStruct weatherDataBuffer;
+RTC_DATA_ATTR calendarDataStruct calendarDataBuffer[6];
+RTC_DATA_ATTR newsDataStruct newsDataBuffer;
 
 void drawTitle();
 void retrieveCalendarData(); 
@@ -104,9 +111,15 @@ void setup() {
     network.getTime(currentTime);
     network.getDateStr(dateStr);
 
-    retrieveCalendarData();
-    retrieveWeatherData(); 
-    retrieveNewsData(); 
+    if (apiCounter == 0) {
+        retrieveCalendarData();
+        retrieveNewsData(); 
+        retrieveWeatherData(); 
+    }
+    if (apiCounter > 3) {
+        apiCounter = 0; 
+    }
+    apiCounter++; 
 
     display.clearDisplay(); // Clear frame buffer of display
     drawTitle(); 
@@ -117,6 +130,7 @@ void setup() {
     drawInteriorTemp(); 
     display.display();
 
+    rtc_gpio_isolate(GPIO_NUM_12); // Isolate/disable GPIO12 on ESP32 (only to reduce power consumption in sleep)
     if (network.currentHour > 23 && network.currentHour < 6) {
         esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP_OVER_NIGHT * uS_TO_S_FACTOR); // Activate wake-up timer -- wake up after 20s here
     }
@@ -172,7 +186,7 @@ void drawCalendar() {
     display.print(" Woche"); 
   
     int offset = 180; 
-    for (int i = 0; i < calendarData[0]->daysToDisplay; i++) {
+    for (int i = 0; i < calendarDataBuffer[0].daysToDisplay; i++) {
         int additionalOffset = drawDay(offset, i); 
         offset += additionalOffset; 
     }
@@ -185,6 +199,15 @@ void retrieveCalendarData() {
         display.print("Could not reach Calendar API!");
         delay(1000);
     }
+    for (int days = 0; days < 6; days++) {
+        calendarDataBuffer[days].daysToDisplay = calendarData[days]->daysToDisplay; 
+        calendarDataBuffer[days].day = calendarData[days]->day; 
+        calendarDataBuffer[days].date = calendarData[days]->date; 
+        for (int i = 0; i < 6; i++) {
+            calendarDataBuffer[days].title[i] = calendarData[days]->title[i]; 
+            calendarDataBuffer[days].time[i] = calendarData[days]->time[i]; 
+        }
+    }
 }
 
 void drawWeather() {
@@ -195,12 +218,12 @@ void drawWeather() {
     // Current Day
     display.setFont(&Lato_Bold30pt7b);
     display.setCursor(460, 185);
-    String tempString = String(weatherData->currentTemp); 
+    String tempString = String(weatherDataBuffer.currentTemp); 
     display.print(tempString + " C");
     display.setFont(&Lato_Bold10pt7b);
     display.setCursor(460 + tempString.length() * 35, 155);
     display.print("o");
-    display.drawBitmap(400, 140, s_logos[getIconIdFromWeatherId(weatherData->currentId)], 48, 48, BLACK, WHITE);
+    display.drawBitmap(400, 140, s_logos[getIconIdFromWeatherId(weatherDataBuffer.currentId)], 48, 48, BLACK, WHITE);
     // Hourly
     int offset = 80; 
     int iconSize = 48; 
@@ -210,15 +233,15 @@ void drawWeather() {
         if (i < 4) {
             display.setFont(&Lato_Bold15pt7b);
             display.setCursor(horizontalPosition + titleOffset, 220);
-            String hourString = String(weatherData->hourlyHourOfDay[i]); 
+            String hourString = String(weatherDataBuffer.hourlyHourOfDay[i]); 
             if (hourString.length() == 1) {
                 hourString = "0" + hourString; 
             }
             display.print(hourString); 
-            display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherData->hourlyId[i])], iconSize, iconSize, BLACK, WHITE);
+            display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherDataBuffer.hourlyId[i])], iconSize, iconSize, BLACK, WHITE);
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
-            String tempString = String(weatherData->hourlyTemp[i]); 
+            String tempString = String(weatherDataBuffer.hourlyTemp[i]); 
             if (tempString.length() == 1) {
                 tempString = " " + tempString; 
             }
@@ -227,11 +250,11 @@ void drawWeather() {
         else {
             display.setFont(&Lato_Bold15pt7b);
             display.setCursor(horizontalPosition + titleOffset, 220);
-            display.print(weatherData->nextDayWeekday); 
-            display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherData->nextDayId)], iconSize, iconSize, BLACK, WHITE);
+            display.print(weatherDataBuffer.nextDayWeekday); 
+            display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherDataBuffer.nextDayId)], iconSize, iconSize, BLACK, WHITE);
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
-            String tempString = String(weatherData->nextDayTemp); 
+            String tempString = String(weatherDataBuffer.nextDayTemp); 
             if (tempString.length() == 1) {
                 tempString = " " + tempString; 
             }
@@ -246,6 +269,17 @@ void retrieveWeatherData() {
         display.print("Could not reach Calendar API!");
         delay(1000);
     }
+    weatherDataBuffer.currentId = weatherData->currentId; 
+    weatherDataBuffer.currentTemp = weatherData->currentTemp; 
+    weatherDataBuffer.nextDayId = weatherData->nextDayId; 
+    weatherDataBuffer.nextDayTemp = weatherData->nextDayTemp; 
+    weatherDataBuffer.nextDayWeekday = weatherData->nextDayWeekday; 
+    for (int i = 0; i < 4; i++) {
+        weatherDataBuffer.hourlyHourOfDay[i] = weatherData->hourlyHourOfDay[i]; 
+        weatherDataBuffer.hourlyId[i] = weatherData->hourlyId[i]; 
+        weatherDataBuffer.hourlyTemp[i] = weatherData->hourlyTemp[i]; 
+    }
+    
 }
 
 int getIconIdFromWeatherId(int weatherId) {
@@ -287,29 +321,29 @@ int getIconIdFromWeatherId(int weatherId) {
 int drawDay(int topOffset, int iterator) {
     int offsetPerEvent = 80; 
 
-    if (calendarData[iterator]->title[0].length() > 3) {
+    if (calendarDataBuffer[iterator].title[0].length() > 3) {
         display.setCursor(10, topOffset);
         display.setFont(&Lato_Bold30pt7b);
         display.setTextSize(1); 
-        display.print(calendarData[iterator]->day);
+        display.print(calendarDataBuffer[iterator].day);
         display.setCursor(25, topOffset + 40);
         display.setFont(&Lato_Light15pt7b);
         display.setTextSize(1); 
-        display.print(calendarData[iterator]->date);
+        display.print(calendarDataBuffer[iterator].date);
     }
 
     int leftOffset = 120;
     int k = 0; 
     for (int i = 0; i < 6; i++) {
-        if (calendarData[iterator]->title[i].length() > 3) {
+        if (calendarDataBuffer[iterator].title[i].length() > 3) {
             display.setCursor(leftOffset, topOffset - 20 + k * 70);
             display.setFont(&Lato_Bold15pt7b);
             display.setTextSize(1); 
-            display.print(calendarData[iterator]->title[i]);
+            display.print(calendarDataBuffer[iterator].title[i]);
             display.setCursor(leftOffset, topOffset + 15 + k * 70);
             display.setFont(&Lato_Light15pt7b);
             display.setTextSize(1); 
-            display.print(calendarData[iterator]->time[i]);
+            display.print(calendarDataBuffer[iterator].time[i]);
             k += 1; 
         }
     }
@@ -337,11 +371,11 @@ void drawNewsItem(int offset) {
     while(lineNumber < 10) {
         display.setCursor(400, offset + lineNumber * lineSpace);
         display.print("- "); 
-        for (int k = 0; k < newsData->newsLineNumbers[newsIterator]; k++) {
-            display.print(newsData->newsText[newsIterator][k]); 
+        for (int k = 0; k < newsDataBuffer.newsLineNumbers[newsIterator]; k++) {
+            display.print(newsDataBuffer.newsText[newsIterator][k]); 
             lineNumber++; 
             display.setCursor(400, offset + lineNumber * lineSpace);
-            if (k < newsData->newsLineNumbers[newsIterator] - 1) {
+            if (k < newsDataBuffer.newsLineNumbers[newsIterator] - 1) {
                 display.print("   ");
             }
         }
@@ -354,6 +388,12 @@ void retrieveNewsData() {
         Serial.println("Failed getting data, retrying");
         display.print("Could not reach Calendar API!");
         delay(1000);
+    }
+    for (int i = 0; i < 10; i++) {
+        newsDataBuffer.newsLineNumbers[i] = newsData->newsLineNumbers[i]; 
+        for (int k = 0; k < 4; k++) {
+            newsDataBuffer.newsText[i][k] = newsData->newsText[i][k]; 
+        }
     }
 }
 

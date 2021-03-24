@@ -18,3 +18,11 @@ class CalendarDay {
     String title[6]; 
     String time[6]; 
 };
+
+typedef struct {
+    int daysToDisplay; 
+    String day; 
+    String date; 
+    String title[6]; 
+    String time[6];  
+} calendarDataStruct; 
