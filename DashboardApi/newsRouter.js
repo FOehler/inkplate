@@ -14,7 +14,8 @@ const lengthCutoff = 40;
 const newsRouter = express.Router();
 newsRouter.get('/', async (req, res, next) => {
     try {
-      console.log('Received a News API call!');
+      var current = new Date();
+      console.log('Received a News API call @' + current.toISOString());
       let feed = await parser.parseURL(url);
       returnData["news"] = []; 
       for (i = 0; i < 10; i++) {

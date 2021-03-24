@@ -14,7 +14,8 @@ var returnData = {};
 const weatherRouter = express.Router();
 weatherRouter.get('/', async (req, res, next) => {
     try {
-      console.log('Received a Weather API call!');
+      var current = new Date();
+      console.log('Received a Weather API call @' + current.toISOString());
       const url = "https://api.openweathermap.org/data/2.5/onecall?lat=" + location_lat + "&lon=" + location_lon + "&appid=" + apiKey + "&units=metric&exclude=minutely,alerts";
       https.get(url, (response) => {
         var resBody = '';

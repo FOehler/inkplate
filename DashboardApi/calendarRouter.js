@@ -17,7 +17,8 @@ class calendarEvent {
 const calendarRouter = express.Router();
 calendarRouter.get('/', async (req, res, next) => {
     try {
-      console.log('Received a Calendar API call!');
+      var current = new Date();
+      console.log('Received a Calendar API call @' + current.toISOString());
       getEvents(oauthClient);
       // create a timeout
       await new Promise((resolve, reject) => {
