@@ -1,7 +1,7 @@
 {
     "board": "Croduino_Boards:Inkplate:Inkplate6",
     "configuration": "PSRAM=enabled,PartitionScheme=huge_app,CPUFreq=240,UploadSpeed=115200,DebugLevel=none",
-    "port": "COM6",
+    "port": "COM5",
     "output": "./build",
     "sketch": "Dashboard\\Inkplate_Dashboard.ino"
 }
