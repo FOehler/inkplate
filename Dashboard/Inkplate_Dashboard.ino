@@ -79,8 +79,8 @@ const uint8_t *s_logos[16] = {icon_s_sn, icon_s_sl, icon_s_h, icon_s_t, icon_s_h
 
 RTC_DATA_ATTR int apiCounter = 0;
 RTC_DATA_ATTR weatherDataStruct weatherDataBuffer;
-RTC_DATA_ATTR calendarDataStruct calendarDataBuffer[6];
 RTC_DATA_ATTR newsDataStruct newsDataBuffer;
+RTC_DATA_ATTR calendarDataStruct calendarDataBuffer[6];
 
 void drawTitle();
 void retrieveCalendarData(); 
@@ -111,9 +111,9 @@ void setup() {
     network.getTime(currentTime);
     network.getDateStr(dateStr);
 
+    retrieveCalendarData();
+    retrieveNewsData(); 
     if (apiCounter == 0) {
-        retrieveCalendarData();
-        retrieveNewsData(); 
         retrieveWeatherData(); 
     }
     if (apiCounter > 3) {
