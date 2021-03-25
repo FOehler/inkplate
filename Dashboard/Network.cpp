@@ -253,7 +253,7 @@ bool Network::getWeatherData(WeatherData* weatherData)
     if (nextDayWeek == 8) {
         nextDayWeek = 1; 
     }
-    weatherData->nextDayWeekday = weekDays[nextDayWeek]; 
+    weatherData->nextDayWeekdayId = nextDayWeek; 
 
     return !f;
 }

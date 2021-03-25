@@ -75,6 +75,10 @@ char news[12][40] = {
     "0F",
     "0F",
 };
+char weekDayCharacters[7][7] = {
+    "So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"
+};
+
 const uint8_t *s_logos[16] = {icon_s_sn, icon_s_sl, icon_s_h, icon_s_t, icon_s_hr, icon_s_lr, icon_s_s, icon_s_hc, icon_s_lc, icon_s_c};
 
 RTC_DATA_ATTR int apiCounter = 0;
@@ -119,8 +123,10 @@ void setup() {
     if (apiCounter > 3) {
         apiCounter = 0; 
     }
-    apiCounter++; 
-
+    else {
+        apiCounter++; 
+    }
+    
     display.clearDisplay(); // Clear frame buffer of display
     drawTitle(); 
     drawCalendar(); 
@@ -250,7 +256,7 @@ void drawWeather() {
         else {
             display.setFont(&Lato_Bold15pt7b);
             display.setCursor(horizontalPosition + titleOffset, 220);
-            display.print(weatherDataBuffer.nextDayWeekday); 
+            display.print(String(weekDayCharacters[weatherDataBuffer.nextDayWeekdayId])); 
             display.drawBitmap(horizontalPosition, 230, s_logos[getIconIdFromWeatherId(weatherDataBuffer.nextDayId)], iconSize, iconSize, BLACK, WHITE);
             display.setFont(&Lato_Light15pt7b);
             display.setCursor(horizontalPosition, 310);
@@ -273,7 +279,7 @@ void retrieveWeatherData() {
     weatherDataBuffer.currentTemp = weatherData->currentTemp; 
     weatherDataBuffer.nextDayId = weatherData->nextDayId; 
     weatherDataBuffer.nextDayTemp = weatherData->nextDayTemp; 
-    weatherDataBuffer.nextDayWeekday = weatherData->nextDayWeekday; 
+    weatherDataBuffer.nextDayWeekdayId = weatherData->nextDayWeekdayId; 
     for (int i = 0; i < 4; i++) {
         weatherDataBuffer.hourlyHourOfDay[i] = weatherData->hourlyHourOfDay[i]; 
         weatherDataBuffer.hourlyId[i] = weatherData->hourlyId[i]; 

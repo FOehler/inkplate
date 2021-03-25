@@ -12,7 +12,7 @@ class WeatherData {
 
     int nextDayId; 
     int nextDayTemp; 
-    String nextDayWeekday; 
+    int nextDayWeekdayId; 
 
     int hourlyHourOfDay[4]; 
     int hourlyId[4]; 
@@ -25,7 +25,7 @@ typedef struct {
 
     int nextDayId; 
     int nextDayTemp; 
-    String nextDayWeekday; 
+    int nextDayWeekdayId; 
 
     int hourlyHourOfDay[4]; 
     int hourlyId[4]; 
