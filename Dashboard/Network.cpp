@@ -185,8 +185,11 @@ bool Network::getCalendarItems(CalendarDay* calendarData[6])
             if (lastMonthDay == tmStart.tm_mday) {
                 Serial.println("Same Day Event: "  + titleString); 
                 k += 1; 
-                calendarData[i-1]->time[k] = timeString; 
-                calendarData[i-1]->title[k] = titleString; 
+                calendarData[i-k]->time[k] = timeString; 
+                calendarData[i-k]->title[k] = titleString; 
+                if (i == 5) {
+                    calendarData[0]->daysToDisplay += 1; 
+                }
             }
             else {
                 k = 0; 
