@@ -39,6 +39,7 @@ class Network
     bool getCalendarItems(CalendarDay* calendarData[6]);
     bool getWeatherData(WeatherData* weatherData);
     bool getNewsData(NewsData* newsData);
+    bool isItSummerTime(int year, int month, int day, int hour, int tzHours);
 
     // Used to store loaction woeid (world id), set in findCity()
     int location = -1;

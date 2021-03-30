@@ -55,6 +55,12 @@ void Network::getTime(char *timeStr)
     struct tm timeinfo;
     gmtime_r(&nowSecs, &timeinfo);
 
+    bool itIsSummertime = isItSummerTime(timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeZone); 
+    if (itIsSummertime) {
+        nowSecs += 3600; 
+        gmtime_r(&nowSecs, &timeinfo);
+    }
+
     // Copies time string into timeStr
     strncpy(timeStr, asctime(&timeinfo) + 11, 5);
 
@@ -81,6 +87,12 @@ void Network::getDateStr(char *dateStr)
     struct tm timeinfo;
     gmtime_r(&nowSecs, &timeinfo);
 
+    bool itIsSummertime = isItSummerTime(timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeZone); 
+    if (itIsSummertime) {
+        nowSecs += 3600; 
+        gmtime_r(&nowSecs, &timeinfo);
+    }
+
     int dayWeek = ((long)((nowSecs + 3600L * timeZone) / 86400L) + 3) % 7;
     int monthDay = timeinfo.tm_mday;
     char monthChar[2 + sizeof(char)];
@@ -95,7 +107,8 @@ void Network::getDateStr(char *dateStr)
 void Network::setTime()
 {
     // Used for setting correct time
-    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    // configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    configTime(0, 0, "pool.ntp.org", "ch.pool.ntp.org");
 
     Serial.print(F("Waiting for NTP time sync: "));
     time_t nowSecs = time(nullptr);
@@ -295,4 +308,20 @@ bool Network::getNewsData(NewsData* newsData)
     // end http
     http.end();
     return !f;
+}
+
+bool Network::isItSummerTime(int year, int month, int day, int hour, int tzHours)
+// input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
+// return value: returns true during Daylight Saving Time, false otherwise
+{
+  month++; 
+  if (month<3 || month>10) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+  if (month>3 && month<10) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+  if (month==3 && (hour + 24 * day)>=(1 + tzHours + 24*(31 - (5 * year /4 + 4) % 7)) || month==10 && (hour + 24 * day)<(1 + tzHours + 24*(31 - (5 * year /4 + 1) % 7))) {
+      return true;
+  }
+  else
+  {
+       return false;
+  }
 }
